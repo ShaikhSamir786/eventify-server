@@ -1,6 +1,7 @@
 import cors from 'cors';
-import { Request, Response, NextFunction } from 'express';
-import logger from './logger.js';
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
+import logger from './logger.ts';
 
 /**
  * CORS Configuration
@@ -25,9 +26,10 @@ const getCORSOptions = (): CORSOptions => {
   const allowedOrigins = [
     clientUrl,
     'http://localhost:3000',
-    'http://localhost:3001',
+    'http://localhost:8080',
     'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
+    'http://127.0.0.1:8080',
+    
   ];
 
   // In production, be more restrictive
