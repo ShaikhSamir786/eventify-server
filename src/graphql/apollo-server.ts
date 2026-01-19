@@ -7,8 +7,8 @@ import { typeDefs, resolvers } from "./index.ts";
 
 export const buildSchema = (): GraphQLSchema => {
   return makeExecutableSchema({
-    typeDefs,
-    resolvers: resolvers as IResolvers, // optional cast for safety
+    typeDefs: typeDefs as any, // typeDefs is an array of DocumentNodes
+    resolvers: resolvers as IResolvers,
   });
 };
 

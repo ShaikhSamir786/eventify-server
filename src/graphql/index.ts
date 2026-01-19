@@ -4,6 +4,7 @@ import { eventTypedefMap, eventResolverMap } from "./events/index.ts";
 import type { IResolvers } from "@graphql-tools/utils";
 import type { DocumentNode } from "graphql";
 
+// Combine all type definitions
 const typeDefs: DocumentNode[] = [...userTypedefMap, ...eventTypedefMap];
 
 const resolvers: IResolvers = {

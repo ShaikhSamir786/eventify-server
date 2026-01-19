@@ -22,9 +22,9 @@ interface CORSOptions {
  */
 const getCORSOptions = (): CORSOptions => {
   const nodeEnv = process.env.NODE_ENV || 'development';
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+  const clientUrl = process.env.CLIENT_URL || 'http://localhost:8080'
   const allowedOrigins = [
-    clientUrl,
+    clientUrl,                                                            
     'http://localhost:3000',
     'http://localhost:8080',
     'http://127.0.0.1:3000',
