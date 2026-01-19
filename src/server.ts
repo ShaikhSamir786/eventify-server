@@ -1,9 +1,9 @@
 import express from "express";
 import type { Request } from "express";
 import bodyParser from "body-parser";
-import cors from "cors";
 import jwt from "jsonwebtoken";
 import logger from "./configs/logger.ts";
+import { initializeCORS, corsErrorHandler } from "./configs/cors.ts";
 import { sequelize } from "./configs/sequelize-postgre.ts";
 import { initModels } from "./models/index-model.ts";
 import { User } from "./models/authmodels.ts";
@@ -15,10 +15,7 @@ import limiter from "./middlewares/limiter.ts";
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true
-}));
+app.use(initializeCORS());
 app.use(express.json());
 app.use(limiter);
 
