@@ -108,6 +108,11 @@ interface ResetPasswordResponse {
   success: boolean;
 }
 
+interface ResendOTPResponse {
+  message: string;
+  success: boolean;
+}
+
 // DateTime scalar type
 const DateTime = new GraphQLScalarType({
   name: "DateTime",
@@ -163,6 +168,46 @@ const userResolvers = {
         }
 
         throw new GraphQLError("Failed to fetch user", {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+      }
+    },
+
+    me: async (
+      _: unknown,
+      __: unknown,
+      context: GraphQLContext
+    ): Promise<{
+      id: number;
+      email: string;
+      firstName: string;
+      lastName: string;
+    } | null> => {
+      try {
+        const { user } = context;
+
+        if (!user) {
+          throw new GraphQLError("Authentication required", {
+            extensions: { code: "UNAUTHENTICATED" },
+          });
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        };
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        logger.error("Me Query Error:", message);
+
+        if (error instanceof GraphQLError) {
+          throw error;
+        }
+
+        throw new GraphQLError("Failed to fetch current user", {
           extensions: { code: "INTERNAL_SERVER_ERROR" },
         });
       }
@@ -226,7 +271,7 @@ const userResolvers = {
         }
 
         logger.info(`User created: ${email}`);
-        
+
         return {
           message: "User created successfully",
           success: true,
@@ -481,8 +526,7 @@ const userResolvers = {
           );
 
           logger.info(
-            `Successful logout for user: ${user.email} from IP: ${
-              ip || "unknown"
+            `Successful logout for user: ${user.email} from IP: ${ip || "unknown"
             }`
           );
         }
@@ -568,8 +612,7 @@ const userResolvers = {
         const match = await bcrypt.compare(currentPassword, user.password);
         if (!match) {
           logger.warn(
-            `Failed password change attempt for user: ${user.email} from IP: ${
-              ip || "unknown"
+            `Failed password change attempt for user: ${user.email} from IP: ${ip || "unknown"
             }`
           );
           throw new GraphQLError("Current password is incorrect", {
@@ -587,8 +630,7 @@ const userResolvers = {
 
         // Log successful password change
         logger.info(
-          `Successful password change for user: ${user.email} from IP: ${
-            ip || "unknown"
+          `Successful password change for user: ${user.email} from IP: ${ip || "unknown"
           }`
         );
 
@@ -754,8 +796,8 @@ const userResolvers = {
           });
         }
 
-        // Verify OTP
-        const isOtpValid = await bcrypt.compare(otp, user.otp);
+        // Verify OTP using the consistent verifyOtp function
+        const isOtpValid = verifyOtp(otp, user.otp);
         if (!isOtpValid) {
           throw new GraphQLError("Invalid OTP", {
             extensions: { code: "BAD_USER_INPUT" },
@@ -792,6 +834,92 @@ const userResolvers = {
         }
 
         throw new GraphQLError(`Password reset failed: ${message}`, {
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+      }
+    },
+
+    // Resend OTP resolver
+    resendOTP: async (
+      _: unknown,
+      { email }: { email: string },
+      context: GraphQLContext
+    ): Promise<ResendOTPResponse> => {
+      try {
+        const { ip } = context;
+
+        // Validate email
+        if (!email) {
+          throw new GraphQLError("Email is required", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+
+        // Email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          throw new GraphQLError("Invalid email format", {
+            extensions: { code: "BAD_USER_INPUT" },
+          });
+        }
+
+        // Find user
+        const user = await User.findOne({ where: { email } });
+        if (!user) {
+          // Return success to prevent email enumeration
+          return {
+            message: "If the email exists, OTP has been sent",
+            success: true,
+          };
+        }
+
+        // Check if user is already verified
+        if (user.dataValues.verified) {
+          return {
+            message: "Email is already verified",
+            success: true,
+          };
+        }
+
+        // Generate new OTP
+        const otp = generateOTP();
+        const hashedOtp = hashOtp(otp);
+
+        // Update user with new OTP
+        await user.update({
+          otp: hashedOtp,
+          otpExpiry: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes
+        });
+
+        // Send OTP via email
+        try {
+          await sendVerificationEmail(email, otp);
+          logger.info(
+            `OTP resent successfully to: ${email} from IP: ${ip || "unknown"}`
+          );
+        } catch (emailError: unknown) {
+          const errMessage =
+            emailError instanceof Error ? emailError.message : "Unknown error";
+          logger.error("Failed to resend OTP email:", errMessage);
+          throw new GraphQLError("Failed to send OTP. Please try again.", {
+            extensions: { code: "INTERNAL_SERVER_ERROR" },
+          });
+        }
+
+        return {
+          message: "OTP has been resent to your email",
+          success: true,
+        };
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Unknown error";
+        logger.error("ResendOTP Error:", message, "IP:", context.ip);
+
+        if (error instanceof GraphQLError) {
+          throw error;
+        }
+
+        throw new GraphQLError(`Failed to resend OTP: ${message}`, {
           extensions: { code: "INTERNAL_SERVER_ERROR" },
         });
       }

@@ -106,9 +106,11 @@ const startServer = async (): Promise<void> => {
               }
             }
           } catch (error: unknown) {
+            // This is normal for unauthenticated requests (login, register, etc.)
+            // Only log at debug level to avoid noise
             const message =
               error instanceof Error ? error.message : "Unknown error";
-            logger.error("Context authentication error:", message);
+            logger.debug("Context authentication:", message);
           }
 
           return context;

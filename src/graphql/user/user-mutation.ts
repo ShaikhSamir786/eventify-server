@@ -10,6 +10,7 @@ const usermutation = gql`
     changePassword(input: ChangePasswordInput!): ChangePasswordResponse!
     forgotPassword(input: ForgotPasswordInput!): ForgotPasswordResponse!
     resetPassword(input: ResetPasswordInput!): ResetPasswordResponse!
+    resendOTP(email: String!): ResendOTPResponse!
   }
 `;
 

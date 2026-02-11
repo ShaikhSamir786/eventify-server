@@ -107,6 +107,12 @@ const userschema = gql`
     message: String!
     success: Boolean!
   }
+
+  # Response type for resend OTP
+  type ResendOTPResponse {
+    message: String!
+    success: Boolean!
+  }
 `;
 
 export default userschema;
