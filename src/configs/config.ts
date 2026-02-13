@@ -5,6 +5,7 @@ dotenv.config();
 
 interface AppConfig {
   port: number | string;
+  nodeEnv: string;
 }
 
 interface DatabaseConfig {
@@ -18,6 +19,7 @@ interface DatabaseConfig {
 interface SecurityConfig {
   jwtSecret: string;
   jwtExpiryIn: string;
+  bcryptSaltRounds: number;
 }
 
 interface MailServiceConfig {
@@ -31,17 +33,24 @@ interface OtpServiceConfig {
   otpsecret?: string;
 }
 
+interface ClientConfig {
+  clientUrl: string;
+  productionClientUrl: string;
+}
+
 interface Config {
   app: AppConfig;
   database: DatabaseConfig;
   security: SecurityConfig;
   mailService: MailServiceConfig;
   otpService: OtpServiceConfig;
+  client: ClientConfig;
 }
 
 const config: Config = {
   app: {
     port: process.env.PORT || 4000,
+    nodeEnv: process.env.NODE_ENV || "development",
   },
   database: {
     name: process.env.DB_NAME,
@@ -53,6 +62,9 @@ const config: Config = {
   security: {
     jwtSecret: process.env.JWT_SECRET || "defaultsecret",
     jwtExpiryIn: process.env.JWT_EXPIRES_IN || "24h",
+    bcryptSaltRounds: process.env.BCRYPT_SALT_ROUNDS
+      ? Number(process.env.BCRYPT_SALT_ROUNDS)
+      : 12,
   },
   mailService: {
     userName: process.env.SMTP_USER,
@@ -62,6 +74,11 @@ const config: Config = {
   },
   otpService: {
     otpsecret: process.env.OTP_SECRET,
+  },
+  client: {
+    clientUrl: process.env.CLIENT_URL || "http://localhost:8080",
+    productionClientUrl:
+      process.env.PRODUCTION_CLIENT_URL || "http://localhost:8080",
   },
 };
 

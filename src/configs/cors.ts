@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import logger from './logger.ts';
+import config from './config.ts';
 
 /**
  * CORS Configuration
@@ -21,22 +22,23 @@ interface CORSOptions {
  * Get CORS options based on environment
  */
 const getCORSOptions = (): CORSOptions => {
-  const nodeEnv = process.env.NODE_ENV || 'development';
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:8080'
+  const nodeEnv = config.app.nodeEnv;
+  const clientUrl = config.client.clientUrl;
   const allowedOrigins = [
-    clientUrl,                                                            
+    clientUrl,
     'http://localhost:3000',
     'http://localhost:8080',
     'http://127.0.0.1:3000',
     'http://127.0.0.1:8080',
-    
+    'http://localhost:4000',
+
   ];
 
   // In production, be more restrictive
   if (nodeEnv === 'production') {
     // Only allow the production client URL
     return {
-      origin: [process.env.PRODUCTION_CLIENT_URL || clientUrl],
+      origin: [config.client.productionClientUrl],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -93,7 +95,7 @@ export const corsErrorHandler = (
     });
     return res.status(403).json({
       error: 'CORS policy violation',
-      message: process.env.NODE_ENV === 'production' ? 'Access denied' : err.message,
+      message: config.app.nodeEnv === 'production' ? 'Access denied' : err.message,
     });
   }
   next(err);

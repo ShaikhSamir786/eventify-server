@@ -2,6 +2,7 @@ import express from "express";
 import type { Request } from "express";
 import jwt from "jsonwebtoken";
 import logger from "./configs/logger.ts";
+import config from "./configs/config.ts";
 import { initializeCORS, corsErrorHandler } from "./configs/cors.ts";
 import { sequelize } from "./configs/sequelize-postgre.ts";
 import { initModels } from "./models/index-model.ts";
@@ -12,7 +13,7 @@ import { rateLimitDirective } from "graphql-rate-limit-directive";
 import limiter from "./middlewares/limiter.ts";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = config.app.port;
 
 app.use(initializeCORS());
 app.use(express.json({ limit: '50mb' }));
@@ -85,10 +86,10 @@ const startServer = async (): Promise<void> => {
             const authHeader = req.headers.authorization || "";
             const token = authHeader.replace("Bearer ", "");
 
-            if (token && process.env.JWT_SECRET) {
+            if (token && config.security.jwtSecret) {
               const decoded = jwt.verify(
                 token,
-                process.env.JWT_SECRET
+                config.security.jwtSecret
               ) as JWTPayload;
 
               const user = await User.findByPk(decoded.id);

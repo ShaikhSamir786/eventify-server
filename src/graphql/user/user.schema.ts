@@ -1,5 +1,6 @@
 import { gql } from "graphql-tag";
-const userschema = gql`
+
+export const userSchema = gql`
   scalar DateTime
 
   # GraphQL User type
@@ -72,6 +73,7 @@ const userschema = gql`
     message: String!
     success: Boolean!
   }
+
   # Input type for password change
   input ChangePasswordInput {
     currentPassword: String!
@@ -113,6 +115,23 @@ const userschema = gql`
     message: String!
     success: Boolean!
   }
-`;
 
-export default userschema;
+  # Queries
+  type Query {
+    users: [User!]!
+    user(id: ID!): User
+    me: UserAuth
+  }
+
+  # Mutations
+  type Mutation {
+    createUser(input: CreateUserInput!): UserResponse
+    verifyEmail(input: VerifyEmailInput!): VerifyEmailResponse!
+    login(input: LoginInput!): LoginResponse!
+    logout: LogoutResponse!
+    changePassword(input: ChangePasswordInput!): ChangePasswordResponse!
+    forgotPassword(input: ForgotPasswordInput!): ForgotPasswordResponse!
+    resetPassword(input: ResetPasswordInput!): ResetPasswordResponse!
+    resendOTP(email: String!): ResendOTPResponse!
+  }
+`;
